@@ -17,6 +17,8 @@ const exceptionSchema = z.object({
   reason: z.string().min(3),
 });
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const authError = await assertApiAuth();
   if (authError) {

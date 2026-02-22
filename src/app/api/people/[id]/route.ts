@@ -18,6 +18,8 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+export const runtime = "nodejs";
+
 export async function PATCH(request: Request, { params }: RouteParams) {
   const authError = await assertApiAuth();
   if (authError) {

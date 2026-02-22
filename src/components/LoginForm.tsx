@@ -5,8 +5,8 @@ import { FormEvent, useState } from "react";
 
 export function LoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("fatih-admin");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +43,7 @@ export function LoginForm() {
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
+          autoComplete="username"
           required
         />
       </div>
@@ -53,6 +54,7 @@ export function LoginForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
+          autoComplete="current-password"
           required
         />
       </div>
@@ -64,7 +66,6 @@ export function LoginForm() {
         {loading ? "Signing in..." : "Sign in"}
       </button>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      <p className="text-xs text-slate-500">Default local credentials: admin / fatih-admin</p>
     </form>
   );
 }

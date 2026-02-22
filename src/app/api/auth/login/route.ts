@@ -12,6 +12,8 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => null);
   const parsed = loginSchema.safeParse(payload);

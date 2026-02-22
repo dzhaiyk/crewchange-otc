@@ -13,6 +13,8 @@ const createPersonSchema = z.object({
   notes: z.string().optional(),
 });
 
+export const runtime = "nodejs";
+
 export async function GET() {
   const authError = await assertApiAuth();
   if (authError) {

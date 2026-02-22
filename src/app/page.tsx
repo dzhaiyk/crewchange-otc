@@ -1,12 +1,42 @@
 import { AppNav } from "@/components/AppNav";
 import { requirePageAuth } from "@/lib/auth";
+import { todayIsoDate } from "@/lib/dates";
+import { ROLE_LABELS, ROLE_ORDER } from "@/lib/roles";
 import { getDashboardData } from "@/lib/rotation-service";
-import { ROLE_LABELS } from "@/lib/roles";
+
+export const runtime = "nodejs";
+
+async function loadDashboardSafely() {
+  try {
+    const data = await getDashboardData();
+    return { data, dataError: "" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown server error";
+
+    return {
+      data: {
+        today: todayIsoDate(),
+        timezoneNote: "Dates are treated as ship-local dates (no time-of-day).",
+        currentCrew: ROLE_ORDER.map((role) => ({ role, personId: "unknown", name: "Unavailable" })),
+        upcomingChanges: [] as Array<{
+          role: (typeof ROLE_ORDER)[number];
+          date: string;
+          outgoingPersonId: string;
+          outgoingName: string;
+          incomingPersonId: string;
+          incomingName: string;
+        }>,
+        warnings: ["Crew data is temporarily unavailable. Check DATABASE_URL and server logs."],
+      },
+      dataError: message,
+    };
+  }
+}
 
 export default async function DashboardPage() {
   await requirePageAuth();
 
-  const data = await getDashboardData();
+  const { data, dataError } = await loadDashboardSafely();
 
   return (
     <div>
@@ -19,6 +49,12 @@ export default async function DashboardPage() {
             <p className="mt-1 text-sm text-slate-600">Today: {data.today} | {data.timezoneNote}</p>
           </div>
         </div>
+
+        {dataError ? (
+          <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            Server data error: {dataError}
+          </p>
+        ) : null}
 
         <section className="mt-6 rounded-xl border border-slate-300 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-semibold">Today&apos;s Crew</h2>

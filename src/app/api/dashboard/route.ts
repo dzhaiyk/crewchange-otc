@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { assertApiAuth } from "@/lib/api-auth";
 import { getDashboardData } from "@/lib/rotation-service";
 
+export const runtime = "nodejs";
+
 export async function GET(request: Request) {
   const authError = await assertApiAuth();
   if (authError) {
