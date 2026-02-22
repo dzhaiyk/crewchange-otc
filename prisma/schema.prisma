@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DD_DAY
+  DD_NIGHT
+  MWD_DAY
+  MWD_NIGHT
+}
+
+enum ExceptionType {
+  EARLY_RELIEF
+  DELAYED_JOIN
+  SWAP
+  MANUAL_MOVE
+}
+
+model Person {
+  id          String       @id @default(cuid())
+  name        String
+  employerId  String?
+  contact     String?
+  primaryRole Role
+  active      Boolean      @default(true)
+  notes       String?
+  assignments Assignment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([primaryRole, active])
+}
+
+model Assignment {
+  id        String   @id @default(cuid())
+  role      Role
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Restrict)
+  startDate String
+  endDate   String
+  createdAt DateTime @default(now())
+
+  @@index([role, startDate])
+  @@index([role, endDate])
+}
+
+model Exception {
+  id           String        @id @default(cuid())
+  type         ExceptionType
+  role         Role
+  oldStartDate String?
+  oldEndDate   String?
+  newStartDate String?
+  newEndDate   String?
+  reason       String
+  createdAt    DateTime      @default(now())
+  createdBy    String
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String
+  entityId    String
+  payloadJson String
+  createdAt   DateTime @default(now())
+  createdBy   String
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
