@@ -11,7 +11,7 @@ import type { Employee, Role, DrillShip } from "@/types";
 
 const schema = z.object({
   full_name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
+  email: z.string().email("Invalid email").or(z.literal("")).nullable(),
   phone: z.string().nullable(),
   role_id: z.string().min(1, "Role is required"),
   drill_ship_id: z.string().nullable(),
@@ -68,7 +68,7 @@ export function EmployeeForm({ employee, roles, ships, onSubmit, onCancel }: Emp
   }, [isFieldRole, setValue]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit((data) => onSubmit({ ...data, email: data.email || null, phone: data.phone || null }))} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="full_name">Full name</Label>
@@ -77,7 +77,7 @@ export function EmployeeForm({ employee, roles, ships, onSubmit, onCancel }: Emp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email <span className="text-muted-foreground font-normal">(optional)</span></Label>
           <Input id="email" type="email" {...register("email")} placeholder="john@example.com" />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>

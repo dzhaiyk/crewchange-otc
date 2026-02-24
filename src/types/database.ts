@@ -21,7 +21,7 @@ export interface Employee {
   id: string;
   auth_id: string | null;
   full_name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   role_id: string;
   drill_ship_id: string | null;
