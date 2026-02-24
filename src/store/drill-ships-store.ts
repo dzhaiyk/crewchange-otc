@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+import { logActivity } from "@/lib/activity-logger";
 import type { DrillShip } from "@/types";
 
 interface DrillShipsState {
@@ -27,19 +28,28 @@ export const useDrillShipsStore = create<DrillShipsState>((set, get) => ({
 
   create: async (data) => {
     const { error } = await supabase.from("drill_ships").insert(data as Record<string, unknown>);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("created", "drill_ship", null, data);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 
   update: async (id, data) => {
     const { error } = await supabase.from("drill_ships").update(data as Record<string, unknown>).eq("id", id);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("updated", "drill_ship", id, data);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 
   remove: async (id) => {
     const { error } = await supabase.from("drill_ships").delete().eq("id", id);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("deleted", "drill_ship", id);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 }));

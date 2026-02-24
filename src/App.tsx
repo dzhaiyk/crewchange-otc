@@ -12,6 +12,9 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { DrillShipsPage } from "@/pages/DrillShipsPage";
 import { RolesPage } from "@/pages/RolesPage";
 import { EmployeesPage } from "@/pages/EmployeesPage";
+import { CrewChangesPage } from "@/pages/CrewChangesPage";
+import { ScheduleRequestsPage } from "@/pages/ScheduleRequestsPage";
+import { ActivityLogPage } from "@/pages/ActivityLogPage";
 
 export default function App() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -54,6 +57,26 @@ export default function App() {
               element={
                 <RoleGuard allowedRoles={["Admin", "Manager"]}>
                   <EmployeesPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/crew-changes"
+              element={
+                <RoleGuard allowedRoles={["Admin", "Manager"]}>
+                  <CrewChangesPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/schedule-requests"
+              element={<ScheduleRequestsPage />}
+            />
+            <Route
+              path="/activity-log"
+              element={
+                <RoleGuard allowedRoles={["Admin", "Manager"]}>
+                  <ActivityLogPage />
                 </RoleGuard>
               }
             />

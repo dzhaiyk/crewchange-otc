@@ -9,17 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DayBalanceSummary } from "@/components/day-balances/DayBalanceSummary";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface EmployeeTableProps {
   employees: Employee[];
   roles: Role[];
   ships: DrillShip[];
+  balances?: Map<string, number>;
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
 }
 
-export function EmployeeTable({ employees, roles, ships, onEdit, onDelete }: EmployeeTableProps) {
+export function EmployeeTable({ employees, roles, ships, balances, onEdit, onDelete }: EmployeeTableProps) {
   const getRoleName = (roleId: string) =>
     roles.find((r) => r.id === roleId)?.name ?? "Unknown";
 
@@ -43,6 +45,7 @@ export function EmployeeTable({ employees, roles, ships, onEdit, onDelete }: Emp
           <TableHead>Role</TableHead>
           <TableHead>Ship</TableHead>
           <TableHead>Shift</TableHead>
+          <TableHead>Balance</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="w-24">Actions</TableHead>
         </TableRow>
@@ -57,6 +60,9 @@ export function EmployeeTable({ employees, roles, ships, onEdit, onDelete }: Emp
             </TableCell>
             <TableCell>{getShipName(emp.drill_ship_id)}</TableCell>
             <TableCell className="capitalize">{emp.shift ?? "—"}</TableCell>
+            <TableCell>
+              <DayBalanceSummary balance={balances?.get(emp.id) ?? 0} />
+            </TableCell>
             <TableCell>
               <div className="flex gap-1">
                 {emp.is_active ? (

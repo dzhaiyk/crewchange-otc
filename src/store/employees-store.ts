@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+import { logActivity } from "@/lib/activity-logger";
 import type { Employee } from "@/types";
 
 interface EmployeeFilters {
@@ -52,19 +53,28 @@ export const useEmployeesStore = create<EmployeesState>((set, get) => ({
 
   create: async (data) => {
     const { error } = await supabase.from("employees").insert(data);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("created", "employee", null, data);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 
   update: async (id, data) => {
     const { error } = await supabase.from("employees").update(data).eq("id", id);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("updated", "employee", id, data);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 
   remove: async (id) => {
     const { error } = await supabase.from("employees").delete().eq("id", id);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("deleted", "employee", id);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 }));

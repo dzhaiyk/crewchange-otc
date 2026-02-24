@@ -28,7 +28,10 @@ export const HELICOPTER_DAYS = [
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", path: "/", icon: "LayoutDashboard", allowedRoles: [] },
+  { label: "Crew Changes", path: "/crew-changes", icon: "CalendarClock", allowedRoles: ["Admin", "Manager"] },
+  { label: "Schedule Requests", path: "/schedule-requests", icon: "ClipboardList", allowedRoles: [] },
   { label: "Drill Ships", path: "/drill-ships", icon: "Ship", allowedRoles: ["Admin"] },
   { label: "Roles", path: "/roles", icon: "Shield", allowedRoles: ["Admin"] },
   { label: "Employees", path: "/employees", icon: "Users", allowedRoles: ["Admin", "Manager"] },
+  { label: "Activity Log", path: "/activity-log", icon: "ScrollText", allowedRoles: ["Admin", "Manager"] },
 ];

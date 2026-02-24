@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+import { logActivity } from "@/lib/activity-logger";
 import type { Role } from "@/types";
 
 interface RolesState {
@@ -27,19 +28,28 @@ export const useRolesStore = create<RolesState>((set, get) => ({
 
   create: async (data) => {
     const { error } = await supabase.from("roles").insert({ ...data, is_system_role: false } as Record<string, unknown>);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("created", "role", null, data);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 
   update: async (id, data) => {
     const { error } = await supabase.from("roles").update(data as Record<string, unknown>).eq("id", id);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("updated", "role", id, data);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 
   remove: async (id) => {
     const { error } = await supabase.from("roles").delete().eq("id", id);
-    if (!error) await get().fetch();
+    if (!error) {
+      logActivity("deleted", "role", id);
+      await get().fetch();
+    }
     return { error: error?.message ?? null };
   },
 }));

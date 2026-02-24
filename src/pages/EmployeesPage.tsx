@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useEmployeesStore } from "@/store/employees-store";
 import { useRolesStore } from "@/store/roles-store";
 import { useDrillShipsStore } from "@/store/drill-ships-store";
+import { useDayBalancesStore } from "@/store/day-balances-store";
 import { EmployeeTable } from "@/components/employees/EmployeeTable";
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export function EmployeesPage() {
   const { employees, loading, filters, setFilters, fetch, create, update, remove } = useEmployeesStore();
   const { roles, fetch: fetchRoles } = useRolesStore();
   const { ships, fetch: fetchShips } = useDrillShipsStore();
+  const { summaries: balances, fetchSummaries } = useDayBalancesStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
 
@@ -29,6 +31,13 @@ export function EmployeesPage() {
     fetchRoles();
     fetchShips();
   }, [fetch, fetchRoles, fetchShips]);
+
+  // Fetch day balance summaries when employees change
+  useEffect(() => {
+    if (employees.length > 0) {
+      fetchSummaries(employees.map((e) => e.id));
+    }
+  }, [employees, fetchSummaries]);
 
   const handleCreate = () => {
     setEditing(null);
@@ -144,6 +153,7 @@ export function EmployeesPage() {
           employees={employees}
           roles={roles}
           ships={ships}
+          balances={balances}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

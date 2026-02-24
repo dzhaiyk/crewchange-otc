@@ -2,13 +2,16 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { NAV_ITEMS } from "@/types";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Ship, Shield, Users } from "lucide-react";
+import { LayoutDashboard, Ship, Shield, Users, CalendarClock, ClipboardList, ScrollText } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
   Ship,
   Shield,
   Users,
+  CalendarClock,
+  ClipboardList,
+  ScrollText,
 };
 
 interface SidebarProps {
