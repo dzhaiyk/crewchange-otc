@@ -11,8 +11,7 @@ import type { Employee, Role, DrillShip } from "@/types";
 
 const schema = z.object({
   full_name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email").or(z.literal("")).nullable(),
-  phone: z.string().nullable(),
+  username: z.string().min(1, "Username is required").regex(/^[a-zA-Z0-9._-]+$/, "Letters, numbers, dots, hyphens, underscores only"),
   role_id: z.string().min(1, "Role is required"),
   drill_ship_id: z.string().nullable(),
   shift: z.enum(["day", "night"]).nullable(),
@@ -41,8 +40,7 @@ export function EmployeeForm({ employee, roles, ships, onSubmit, onCancel }: Emp
     resolver: zodResolver(schema),
     defaultValues: {
       full_name: employee?.full_name ?? "",
-      email: employee?.email ?? "",
-      phone: employee?.phone ?? "",
+      username: employee?.username ?? "",
       role_id: employee?.role_id ?? "",
       drill_ship_id: employee?.drill_ship_id ?? null,
       shift: employee?.shift ?? null,
@@ -68,27 +66,22 @@ export function EmployeeForm({ employee, roles, ships, onSubmit, onCancel }: Emp
   }, [isFieldRole, setValue]);
 
   return (
-    <form onSubmit={handleSubmit((data) => onSubmit({ ...data, email: data.email || null, phone: data.phone || null }))} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="full_name">Full name</Label>
+          <Label htmlFor="full_name">Name</Label>
           <Input id="full_name" {...register("full_name")} placeholder="John Doe" />
           {errors.full_name && <p className="text-sm text-destructive">{errors.full_name.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email <span className="text-muted-foreground font-normal">(optional)</span></Label>
-          <Input id="email" type="email" {...register("email")} placeholder="john@example.com" />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          <Label htmlFor="username">Username</Label>
+          <Input id="username" {...register("username")} placeholder="john.doe" />
+          {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" {...register("phone")} placeholder="Optional" />
-        </div>
-
         <div className="space-y-2">
           <Label>Role</Label>
           <Select

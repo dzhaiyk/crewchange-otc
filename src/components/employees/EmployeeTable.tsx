@@ -39,7 +39,7 @@ export function EmployeeTable({ employees, roles, ships, onEdit, onDelete }: Emp
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
+          <TableHead>Username</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Ship</TableHead>
           <TableHead>Shift</TableHead>
@@ -51,7 +51,7 @@ export function EmployeeTable({ employees, roles, ships, onEdit, onDelete }: Emp
         {employees.map((emp) => (
           <TableRow key={emp.id}>
             <TableCell className="font-medium">{emp.full_name}</TableCell>
-            <TableCell className="text-muted-foreground">{emp.email}</TableCell>
+            <TableCell className="text-muted-foreground">{emp.username}</TableCell>
             <TableCell>
               <Badge variant="outline">{getRoleName(emp.role_id)}</Badge>
             </TableCell>

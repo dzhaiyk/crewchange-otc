@@ -20,6 +20,7 @@ export interface Role {
 export interface Employee {
   id: string;
   auth_id: string | null;
+  username: string;
   full_name: string;
   email: string | null;
   phone: string | null;
