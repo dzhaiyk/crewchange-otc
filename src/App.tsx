@@ -15,6 +15,7 @@ import { EmployeesPage } from "@/pages/EmployeesPage";
 import { CrewChangesPage } from "@/pages/CrewChangesPage";
 import { ScheduleRequestsPage } from "@/pages/ScheduleRequestsPage";
 import { ActivityLogPage } from "@/pages/ActivityLogPage";
+import { CalendarPage } from "@/pages/CalendarPage";
 
 export default function App() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -36,6 +37,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
             <Route
               path="/drill-ships"
               element={
