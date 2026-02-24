@@ -1,14 +1,11 @@
 -- CrewChange Phase 1 Schema
 -- Multi-ship crew rotation management
 
--- Enable UUID generation
-create extension if not exists "uuid-ossp";
-
 -- ============================================================
 -- DRILL SHIPS
 -- ============================================================
 create table drill_ships (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   name text not null unique,
   helicopter_day integer not null default 4 check (helicopter_day between 0 and 6),
   is_active boolean not null default true,
@@ -22,7 +19,7 @@ comment on column drill_ships.helicopter_day is '0=Sunday, 1=Monday, ... 6=Satur
 -- ROLES
 -- ============================================================
 create table roles (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   name text not null unique,
   description text,
   is_system_role boolean not null default false,
@@ -35,7 +32,7 @@ create table roles (
 -- EMPLOYEES
 -- ============================================================
 create table employees (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   auth_id uuid unique references auth.users(id) on delete set null,
   full_name text not null,
   email text not null unique,
@@ -54,7 +51,7 @@ create table employees (
 -- CREW CHANGES
 -- ============================================================
 create table crew_changes (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   drill_ship_id uuid not null references drill_ships(id) on delete cascade,
   scheduled_date date not null,
   status text not null default 'planned' check (status in ('planned', 'confirmed', 'completed', 'cancelled')),
@@ -68,7 +65,7 @@ create table crew_changes (
 -- CREW CHANGE ENTRIES
 -- ============================================================
 create table crew_change_entries (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   crew_change_id uuid not null references crew_changes(id) on delete cascade,
   outgoing_employee_id uuid references employees(id) on delete set null,
   incoming_employee_id uuid references employees(id) on delete set null,
@@ -87,7 +84,7 @@ create table crew_change_entries (
 -- SCHEDULE REQUESTS
 -- ============================================================
 create table schedule_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   employee_id uuid not null references employees(id) on delete cascade,
   drill_ship_id uuid not null references drill_ships(id) on delete cascade,
   original_date date not null,
@@ -105,7 +102,7 @@ create table schedule_requests (
 -- DAY BALANCES
 -- ============================================================
 create table day_balances (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   employee_id uuid not null references employees(id) on delete cascade,
   crew_change_entry_id uuid references crew_change_entries(id) on delete set null,
   days_amount integer not null,
@@ -117,7 +114,7 @@ create table day_balances (
 -- ACTIVITY LOG
 -- ============================================================
 create table activity_log (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   user_id uuid references employees(id) on delete set null,
   action text not null,
   entity_type text not null,
