@@ -2,15 +2,14 @@
  * Calendar / timeline computation utilities.
  *
  * Pure functions that compute onboard/offshore periods for employees,
- * generate week boundaries for the timeline grid, and calculate
- * shifted crew-change dates for the "Move Hitch" feature.
+ * generate month grids for the year view, and calculate shifted
+ * crew-change dates for the "Move Hitch" feature.
  */
 
 import {
   addDays,
   diffDays,
   toIsoDate,
-  fromIsoDate,
   nearestPastOrSameWeekday,
   DEFAULT_CYCLE_DAYS,
 } from "./rotation";
@@ -27,9 +26,10 @@ export interface Period {
   isConfirmed: boolean; // true when backed by a CrewChange record
 }
 
-export interface TimelineWeek {
-  start: string; // ISO date (Monday or week start)
-  end: string; // ISO date (Sunday or week end)
+export interface MonthDay {
+  date: string; // ISO date
+  day: number; // day of month (1-31)
+  isCurrentMonth: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -87,15 +87,9 @@ export function computeRotationPeriods(
   const basePeriods: Period[] = [];
   let cursor = walkStart;
 
-  // The first period type depends on whether the employee starts onboard
-  // We determine this from is_onboard or default to onboard if rotation_start_date is set
-  let isOnboard = employee.is_onboard;
-
   // Align: from rotation_start_date, first cycle is onboard, then offshore, etc.
-  // Count how many full cycles from rotStart to walkStart to determine phase
   const cyclesFromStart = Math.floor(diffDays(walkStart, rotStart) / DEFAULT_CYCLE_DAYS);
-  // If even number of cycles from start, same phase as start (onboard); odd = opposite
-  isOnboard = cyclesFromStart % 2 === 0;
+  let isOnboard = cyclesFromStart % 2 === 0;
 
   // Generate enough periods to cover through rangeEnd
   const maxPeriods = Math.ceil(totalRange / DEFAULT_CYCLE_DAYS) + cyclesBefore + 4;
@@ -114,7 +108,6 @@ export function computeRotationPeriods(
 
   // --- 3. Overlay confirmed transitions ---------------------------------
   if (transitions.length > 0) {
-    // Rebuild periods using transition points
     const allPeriods: Period[] = [];
 
     // Determine initial state at rangeStart from base cycle
@@ -136,7 +129,6 @@ export function computeRotationPeriods(
     );
 
     for (const t of rangeTransitions) {
-      // Period from current position to this transition
       if (t.date > periodStart) {
         allPeriods.push({
           start: periodStart,
@@ -167,24 +159,52 @@ export function computeRotationPeriods(
 }
 
 /* ------------------------------------------------------------------ */
-/*  getTimelineWeeks                                                   */
+/*  getMonthDays                                                       */
 /* ------------------------------------------------------------------ */
 
 /**
- * Generate an array of week boundaries starting from `startDate`.
- * Each week is 7 days. Used to define the column grid.
+ * Generate a grid of day cells for a month calendar view.
+ * Weeks start on Monday. Returns 42 cells (6 rows × 7 columns)
+ * including leading/trailing days from adjacent months.
  */
-export function getTimelineWeeks(startDate: string, weekCount: number): TimelineWeek[] {
-  const weeks: TimelineWeek[] = [];
-  let cursor = startDate;
+export function getMonthDays(year: number, month: number): MonthDay[] {
+  const firstOfMonth = new Date(year, month, 1);
+  // Convert JS day (0=Sun) to Monday-based index (0=Mon)
+  const dayOfWeek = firstOfMonth.getDay();
+  const mondayIndex = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
 
-  for (let i = 0; i < weekCount; i++) {
-    const end = addDays(cursor, 6);
-    weeks.push({ start: cursor, end });
-    cursor = addDays(cursor, 7);
+  // Start from the Monday before or on the 1st
+  const gridStart = new Date(year, month, 1 - mondayIndex);
+
+  const days: MonthDay[] = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    days.push({
+      date: toIsoDate(d),
+      day: d.getDate(),
+      isCurrentMonth: d.getMonth() === month && d.getFullYear() === year,
+    });
   }
 
-  return weeks;
+  return days;
+}
+
+/* ------------------------------------------------------------------ */
+/*  isOnboardOnDate                                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Check whether a date falls within an onboard period.
+ * Returns the matching period if found, or null.
+ */
+export function isOnboardOnDate(periods: Period[], date: string): Period | null {
+  for (const p of periods) {
+    if (p.type === "onboard" && date >= p.start && date < p.end) {
+      return p;
+    }
+  }
+  return null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -219,7 +239,6 @@ export function getNextCrewChangeDate(
   const rotStart = employee.rotation_start_date;
   if (!rotStart) return null;
 
-  // Walk forward from rotation start in 28-day increments until we pass today
   let cursor = rotStart;
   const maxIterations = 100;
   for (let i = 0; i < maxIterations; i++) {
@@ -229,6 +248,35 @@ export function getNextCrewChangeDate(
     cursor = aligned;
   }
   return null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  getTimelineWeeks                                                   */
+/* ------------------------------------------------------------------ */
+
+export interface TimelineWeek {
+  start: string; // ISO date (Monday)
+  end: string; // ISO date (Sunday, exclusive end = next Monday)
+  label: string; // e.g. "Feb 24"
+}
+
+/**
+ * Generate an array of week boundaries for the timeline view.
+ * Each week runs Monday → next Monday (exclusive end).
+ */
+export function getTimelineWeeks(startDate: string, count: number): TimelineWeek[] {
+  const weeks: TimelineWeek[] = [];
+  let cursor = startDate;
+
+  for (let i = 0; i < count; i++) {
+    const end = addDays(cursor, 7);
+    const d = new Date(cursor + "T00:00:00");
+    const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    weeks.push({ start: cursor, end, label });
+    cursor = end;
+  }
+
+  return weeks;
 }
 
 /* ------------------------------------------------------------------ */
@@ -257,16 +305,4 @@ function clipPeriods(periods: Period[], rangeStart: string, rangeEnd: string): P
   }
 
   return result;
-}
-
-/**
- * Get the start date for the timeline view — the Monday of the week
- * containing the first day of the given month.
- */
-export function getMonthViewStart(year: number, month: number): string {
-  const firstOfMonth = toIsoDate(new Date(year, month, 1));
-  const date = fromIsoDate(firstOfMonth);
-  const day = date.getDay(); // 0=Sun, 1=Mon, ...
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  return addDays(firstOfMonth, mondayOffset);
 }

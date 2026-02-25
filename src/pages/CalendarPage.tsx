@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -10,41 +7,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShipTimeline } from "@/components/calendar/ShipTimeline";
+import { ViewSwitcher, type ViewMode } from "@/components/shared/ViewSwitcher";
+import { CrewCards } from "@/components/calendar/CrewCards";
+import { CalendarView } from "@/components/calendar/CalendarView";
+import { TimelineView } from "@/components/calendar/TimelineView";
+import { BottomPanels } from "@/components/calendar/BottomPanels";
 import { MoveHitchDialog } from "@/components/calendar/MoveHitchDialog";
-import { getTimelineWeeks, getMonthViewStart } from "@/lib/calendar";
-import { toIsoDate, addDays } from "@/lib/rotation";
+import { buildCrewRoster } from "@/lib/crew-roster";
+import { toIsoDate, addDays, getDayOfWeek } from "@/lib/rotation";
 import { supabase } from "@/lib/supabase";
 import { useDrillShipsStore } from "@/store/drill-ships-store";
 import { useEmployeesStore } from "@/store/employees-store";
+import { useRolesStore } from "@/store/roles-store";
 import { useCrewChangesStore } from "@/store/crew-changes-store";
 import { useScheduleRequestsStore } from "@/store/schedule-requests-store";
 import { useAuth } from "@/hooks/use-auth";
 import type { Employee, CrewChangeEntry } from "@/types";
-
-const WEEKS_TO_SHOW = 12;
 
 export function CalendarPage() {
   const { employee: currentEmployee, isAdmin, isManager } = useAuth();
 
   // Stores
   const { ships, fetch: fetchShips, loading: shipsLoading } = useDrillShipsStore();
-  const {
-    employees,
-    fetch: fetchEmployees,
-    loading: employeesLoading,
-  } = useEmployeesStore();
-  const {
-    crewChanges,
-    fetch: fetchCrewChanges,
-  } = useCrewChangesStore();
-  const {
-    requests,
-    fetch: fetchRequests,
-  } = useScheduleRequestsStore();
+  const { employees, fetch: fetchEmployees, loading: employeesLoading } = useEmployeesStore();
+  const { roles, fetch: fetchRoles } = useRolesStore();
+  const { crewChanges, fetch: fetchCrewChanges } = useCrewChangesStore();
+  const { fetch: fetchRequests } = useScheduleRequestsStore();
 
   // Local state
   const [selectedShipId, setSelectedShipId] = useState<string>("");
+  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
+  const [selectedDate, setSelectedDate] = useState(() => toIsoDate(new Date()));
   const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
   const [allEntries, setAllEntries] = useState<CrewChangeEntry[]>([]);
@@ -54,24 +47,20 @@ export function CalendarPage() {
 
   const today = toIsoDate(new Date());
 
-  // Compute timeline weeks from view start
-  const viewStart = useMemo(
-    () => getMonthViewStart(viewYear, viewMonth),
-    [viewYear, viewMonth],
-  );
-  const weeks = useMemo(() => getTimelineWeeks(viewStart, WEEKS_TO_SHOW), [viewStart]);
-  const lastWeek = weeks[weeks.length - 1];
-  const rangeEnd = lastWeek ? addDays(lastWeek.end, 1) : viewStart;
+  // Compute a wide range for roster building (current year ± buffer)
+  const rangeStart = `${viewYear}-01-01`;
+  const rangeEnd = `${viewYear}-12-31`;
 
   // --- Initial data fetch ---
   useEffect(() => {
     fetchShips();
     fetchEmployees();
+    fetchRoles();
     fetchCrewChanges();
     fetchRequests();
-  }, [fetchShips, fetchEmployees, fetchCrewChanges, fetchRequests]);
+  }, [fetchShips, fetchEmployees, fetchRoles, fetchCrewChanges, fetchRequests]);
 
-  // Auto-select ship (prefer current employee's ship, else first active ship)
+  // Auto-select ship
   useEffect(() => {
     if (selectedShipId) return;
     if (currentEmployee?.drill_ship_id) {
@@ -82,7 +71,7 @@ export function CalendarPage() {
     }
   }, [ships, currentEmployee, selectedShipId]);
 
-  // Fetch all crew change entries for crew changes in the visible range
+  // Fetch crew change entries
   useEffect(() => {
     if (!selectedShipId || crewChanges.length === 0) {
       setAllEntries([]);
@@ -92,7 +81,7 @@ export function CalendarPage() {
     const shipCCs = crewChanges.filter(
       (cc) =>
         cc.drill_ship_id === selectedShipId &&
-        cc.scheduled_date >= viewStart &&
+        cc.scheduled_date >= rangeStart &&
         cc.scheduled_date <= rangeEnd,
     );
 
@@ -102,7 +91,6 @@ export function CalendarPage() {
     }
 
     const ccIds = shipCCs.map((cc) => cc.id);
-
     setEntriesLoading(true);
     supabase
       .from("crew_change_entries")
@@ -112,16 +100,13 @@ export function CalendarPage() {
         setAllEntries((data as CrewChangeEntry[] | null) ?? []);
         setEntriesLoading(false);
       });
-  }, [selectedShipId, crewChanges, viewStart, rangeEnd]);
+  }, [selectedShipId, crewChanges, rangeStart, rangeEnd]);
 
   // --- Derived data ---
   const selectedShip = ships.find((s) => s.id === selectedShipId) ?? null;
 
   const shipEmployees = useMemo(
-    () =>
-      employees.filter(
-        (e) => e.drill_ship_id === selectedShipId && e.is_active,
-      ),
+    () => employees.filter((e) => e.drill_ship_id === selectedShipId && e.is_active),
     [employees, selectedShipId],
   );
 
@@ -130,44 +115,28 @@ export function CalendarPage() {
     [crewChanges, selectedShipId],
   );
 
-  const shipRequests = useMemo(
+  // Build crew roster
+  const roster = useMemo(
     () =>
-      requests.filter(
-        (r) => r.drill_ship_id === selectedShipId && r.status === "pending",
-      ),
-    [requests, selectedShipId],
+      buildCrewRoster(shipEmployees, roles, shipCrewChanges, allEntries, rangeStart, rangeEnd),
+    [shipEmployees, roles, shipCrewChanges, allEntries, rangeStart, rangeEnd],
   );
 
+  // Timeline start date: Monday of the current week
+  const timelineStartDate = useMemo(() => {
+    const dow = getDayOfWeek(today); // 0=Sun
+    const mondayOffset = (dow === 0 ? 6 : dow - 1);
+    return addDays(today, -mondayOffset);
+  }, [today]);
+
   // --- Handlers ---
-  const handlePrevMonth = () => {
-    setViewMonth((m) => {
-      if (m === 0) {
-        setViewYear((y) => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
-  };
+  const handleMonthChange = useCallback((y: number, m: number) => {
+    setViewYear(y);
+    setViewMonth(m);
+  }, []);
 
-  const handleNextMonth = () => {
-    setViewMonth((m) => {
-      if (m === 11) {
-        setViewYear((y) => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
-  };
-
-  const handleToday = () => {
-    const now = new Date();
-    setViewYear(now.getFullYear());
-    setViewMonth(now.getMonth());
-  };
-
-  const handleMoveHitch = useCallback(
+  const handlePersonClick = useCallback(
     (emp: Employee) => {
-      // Field employees can only move their own hitch
       if (!isAdmin && !isManager && emp.id !== currentEmployee?.id) return;
       setHitchEmployee(emp);
       setHitchDialogOpen(true);
@@ -183,7 +152,7 @@ export function CalendarPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
         <p className="text-sm text-muted-foreground">
-          Visual timeline of crew rotations and onboard periods.
+          Crew rotation calendar with monthly and timeline views.
         </p>
       </div>
 
@@ -205,45 +174,62 @@ export function CalendarPage() {
           </SelectContent>
         </Select>
 
-        {/* Month navigation */}
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon-sm" onClick={handlePrevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="min-w-[120px] text-center text-sm font-medium">
-            {format(new Date(viewYear, viewMonth), "MMMM yyyy")}
-          </div>
-          <Button variant="outline" size="icon-sm" onClick={handleNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <Button variant="outline" size="sm" onClick={handleToday}>
-          Today
-        </Button>
+        {/* View switcher */}
+        <ViewSwitcher view={viewMode} onChange={setViewMode} />
       </div>
 
-      {/* Timeline */}
+      {/* Main content */}
       {loading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-64 w-full" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+          </div>
+          <Skeleton className="h-96 rounded-xl" />
         </div>
       ) : selectedShip ? (
-        <div className="overflow-x-auto">
-          <div className="min-w-[900px]">
-            <ShipTimeline
-              ship={selectedShip}
-              employees={shipEmployees}
-              crewChanges={shipCrewChanges}
-              entries={allEntries}
-              pendingRequests={shipRequests}
-              weeks={weeks}
+        <>
+          {/* Crew status cards */}
+          <CrewCards
+            selectedDate={selectedDate}
+            roster={roster}
+            onPersonClick={handlePersonClick}
+          />
+
+          {/* Calendar or Timeline view */}
+          {viewMode === "calendar" ? (
+            <CalendarView
+              year={viewYear}
+              month={viewMonth}
+              roster={roster}
+              helicopterDay={selectedShip.helicopter_day}
               today={today}
-              onMoveHitch={handleMoveHitch}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              onMonthChange={handleMonthChange}
             />
-          </div>
-        </div>
+          ) : (
+            <TimelineView
+              roster={roster}
+              fieldEmployees={roster.fieldEmployees}
+              roles={roles}
+              startDate={timelineStartDate}
+              today={today}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+            />
+          )}
+
+          {/* Bottom info panels */}
+          <BottomPanels
+            selectedDate={selectedDate}
+            roster={roster}
+            fieldEmployees={roster.fieldEmployees}
+            roles={roles}
+            ship={selectedShip}
+            today={today}
+          />
+        </>
       ) : (
         <div className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
           Select a ship to view the crew rotation calendar.

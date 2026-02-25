@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
+  --font-heading: 'DM Sans', sans-serif;
+  --font-mono: 'Space Mono', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -65,6 +67,21 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
+
+  /* Font vars */
+  --font-heading: 'DM Sans', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Position colors */
+  --pos-dd-day: #60A5FA;
+  --pos-dd-night: #818CF8;
+  --pos-mwd-day: #34D399;
+  --pos-mwd-night: #2DD4BF;
+
+  /* Status colors */
+  --status-onboard: #22C55E;
+  --status-crew-change: #FCD34D;
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -117,4 +134,23 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Night-shift diagonal stripe overlay */
+.stripe-overlay {
+  position: relative;
+}
+.stripe-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.07) 4px,
+    rgba(255, 255, 255, 0.07) 8px
+  );
+  border-radius: inherit;
 }
