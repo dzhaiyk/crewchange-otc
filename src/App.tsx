@@ -41,7 +41,7 @@ export default function App() {
             <Route
               path="/drill-ships"
               element={
-                <RoleGuard allowedRoles={["Admin"]}>
+                <RoleGuard allowedRoles={["admin"]}>
                   <DrillShipsPage />
                 </RoleGuard>
               }
@@ -49,7 +49,7 @@ export default function App() {
             <Route
               path="/roles"
               element={
-                <RoleGuard allowedRoles={["Admin"]}>
+                <RoleGuard allowedRoles={["admin"]}>
                   <RolesPage />
                 </RoleGuard>
               }
@@ -57,7 +57,7 @@ export default function App() {
             <Route
               path="/employees"
               element={
-                <RoleGuard allowedRoles={["Admin", "Manager"]}>
+                <RoleGuard allowedRoles={["admin", "manager"]}>
                   <EmployeesPage />
                 </RoleGuard>
               }
@@ -65,7 +65,7 @@ export default function App() {
             <Route
               path="/crew-changes"
               element={
-                <RoleGuard allowedRoles={["Admin", "Manager"]}>
+                <RoleGuard allowedRoles={["admin", "manager"]}>
                   <CrewChangesPage />
                 </RoleGuard>
               }
@@ -77,7 +77,7 @@ export default function App() {
             <Route
               path="/activity-log"
               element={
-                <RoleGuard allowedRoles={["Admin", "Manager"]}>
+                <RoleGuard allowedRoles={["admin", "manager"]}>
                   <ActivityLogPage />
                 </RoleGuard>
               }

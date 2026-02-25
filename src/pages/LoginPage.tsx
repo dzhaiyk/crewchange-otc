@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export function LoginPage() {
   const { isAuthenticated } = useAuth();
   const signIn = useAuthStore((s) => s.signIn);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,8 @@ export function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    // Support both email and username login
+    const email = identifier.includes("@") ? identifier : `${identifier}@crewchange.local`;
     const result = await signIn(email, password);
     if (result.error) {
       setError(result.error);
@@ -45,13 +47,13 @@ export function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Username or Email</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="john.doe or you@example.com"
                 required
               />
             </div>

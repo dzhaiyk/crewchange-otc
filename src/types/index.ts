@@ -29,10 +29,10 @@ export const HELICOPTER_DAYS = [
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", path: "/", icon: "LayoutDashboard", allowedRoles: [] },
   { label: "Calendar", path: "/calendar", icon: "CalendarDays", allowedRoles: [] },
-  { label: "Crew Changes", path: "/crew-changes", icon: "CalendarClock", allowedRoles: ["Admin", "Manager"] },
+  { label: "Crew Changes", path: "/crew-changes", icon: "CalendarClock", allowedRoles: ["admin", "manager"] },
   { label: "Schedule Requests", path: "/schedule-requests", icon: "ClipboardList", allowedRoles: [] },
-  { label: "Drill Ships", path: "/drill-ships", icon: "Ship", allowedRoles: ["Admin"] },
-  { label: "Roles", path: "/roles", icon: "Shield", allowedRoles: ["Admin"] },
-  { label: "Employees", path: "/employees", icon: "Users", allowedRoles: ["Admin", "Manager"] },
-  { label: "Activity Log", path: "/activity-log", icon: "ScrollText", allowedRoles: ["Admin", "Manager"] },
+  { label: "Drill Ships", path: "/drill-ships", icon: "Ship", allowedRoles: ["admin"] },
+  { label: "Roles", path: "/roles", icon: "Shield", allowedRoles: ["admin"] },
+  { label: "Employees", path: "/employees", icon: "Users", allowedRoles: ["admin", "manager"] },
+  { label: "Activity Log", path: "/activity-log", icon: "ScrollText", allowedRoles: ["admin", "manager"] },
 ];

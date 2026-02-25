@@ -47,12 +47,8 @@ export function RoleForm({ role, onSubmit, onCancel }: RoleFormProps) {
           id="name"
           {...register("name")}
           placeholder="e.g. Toolpusher"
-          disabled={role?.is_system_role}
         />
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-        {role?.is_system_role && (
-          <p className="text-xs text-muted-foreground">System role names cannot be changed</p>
-        )}
       </div>
 
       <div className="space-y-2">

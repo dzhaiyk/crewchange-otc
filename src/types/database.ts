@@ -10,6 +10,7 @@ export interface DrillShip {
 export interface Role {
   id: string;
   name: string;
+  system_key: string | null;
   description: string | null;
   is_system_role: boolean;
   is_field_role: boolean;

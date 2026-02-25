@@ -12,6 +12,7 @@ import type { Employee, Role, DrillShip } from "@/types";
 const schema = z.object({
   full_name: z.string().min(1, "Name is required"),
   username: z.string().min(1, "Username is required").regex(/^[a-zA-Z0-9._-]+$/, "Letters, numbers, dots, hyphens, underscores only"),
+  password: z.string().optional(),
   role_id: z.string().min(1, "Role is required"),
   drill_ship_id: z.string().nullable(),
   shift: z.enum(["day", "night"]).nullable(),
@@ -41,6 +42,7 @@ export function EmployeeForm({ employee, roles, ships, onSubmit, onCancel }: Emp
     defaultValues: {
       full_name: employee?.full_name ?? "",
       username: employee?.username ?? "",
+      password: "",
       role_id: employee?.role_id ?? "",
       drill_ship_id: employee?.drill_ship_id ?? null,
       shift: employee?.shift ?? null,
@@ -80,6 +82,15 @@ export function EmployeeForm({ employee, roles, ships, onSubmit, onCancel }: Emp
           {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
         </div>
       </div>
+
+      {!employee && (
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" type="password" {...register("password")} placeholder="Set login password" />
+          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+          <p className="text-xs text-muted-foreground">Creates a login account for this employee. Min 6 characters.</p>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
